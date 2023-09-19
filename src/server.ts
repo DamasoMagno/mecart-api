@@ -1,6 +1,6 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
 import { cartRoute } from "./routes/cart.route";
 import { userRoute } from "./routes/user.route";

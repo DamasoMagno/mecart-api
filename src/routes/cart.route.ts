@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 export const cartRoute = Router();
 
-import { prisma, Prisma } from "../lib/prisma";
+import { prisma } from "../lib/prisma";
 import { authenticateUser } from "../middlwares/authenticate";
 
 cartRoute.use(authenticateUser);
@@ -20,7 +20,7 @@ cartRoute.post('/', async (request, response) => {
   await prisma.cart.create({
     data: {
       title,
-      limit: new Prisma.Decimal(limit),
+      limit,
       userId
     }
   });
@@ -41,10 +41,10 @@ cartRoute.get('/', async (request, response) => {
 
   const carts = await prisma.cart.findMany({
     where: {
-      userId,
       title: {
         contains: title
-      }
+      },
+      userId
     },
     include: {
       products: true
@@ -54,8 +54,7 @@ cartRoute.get('/', async (request, response) => {
   return response
     .status(200)
     .json(carts);
-}
-);
+});
 
 cartRoute.get('/:cartId', async (request, response) => {
   const findCartSchema = z.object({
@@ -77,35 +76,28 @@ cartRoute.get('/:cartId', async (request, response) => {
     .json(cart);
 });
 
-cartRoute.patch('/:cartId', async (request, response) => {
+cartRoute.patch('/:cartI', async (request, response) => {
   const findCartSchema = z.object({
     cartId: z.string(),
   });
 
   const cartSchema = z.object({
     title: z.string().optional(),
-    limit: z.number().min(0).optional()
+    limit: z.number().optional()
   });
 
-  const { limit, title } = cartSchema.parse(request.body);
+  const cart = cartSchema.parse(request.body);
   const { cartId } = findCartSchema.parse(request.params);
-
-  if (!limit && !title) {
-    return response.status(400).send({ error: "Title or Limit field required" })
-  }
 
   await prisma.cart.update({
     where: {
       id: cartId
     },
-    data: {
-      title,
-      limit
-    }
+    data: { ...cart }
   });
 
   return response
-    .status(200)
+    .status(204)
     .send();
 });
 
@@ -114,17 +106,14 @@ cartRoute.delete('/:cartId', async (req, res) => {
     cartId: z.string(),
   });
 
-  try {
-    const { cartId } = paramsSchema.parse(req.params);
+  const { cartId } = paramsSchema.parse(req.params);
 
-    await prisma.cart.delete({
-      where: {
-        id: cartId
-      }
-    });
-  } catch (error) {
-    console.log(error);
-  }
+  await prisma.cart.delete({
+    where: {
+      id: cartId,
+      userId: req.userId
+    }
+  });
 
-  return res.status(200).send();
+  return res.status(204).send();
 });

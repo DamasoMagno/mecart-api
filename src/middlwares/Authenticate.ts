@@ -5,7 +5,7 @@ export function authenticateUser(req: Request, res: Response, next: NextFunction
   const [, token] = req.headers.authorization?.split(" ") as string[];
 
   try {
-    const checkUser = verify(token, "575ae83ad709c84f7f89aaa02ff950d7");
+    const checkUser = verify(token, String(process.env.SECRET_KEY));
     req.userId = checkUser.sub as string;
 
     next();

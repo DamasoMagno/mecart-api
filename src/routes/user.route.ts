@@ -46,33 +46,37 @@ userRoute.post('/login', async (req, res) => {
 
   const { email, password } = cartSchema.parse(req.body);
 
-  const checkExists = await prisma.user.findFirst({
-    where: {
-      email
+  try {
+    const checkExists = await prisma.user.findFirst({
+      where: {
+        email
+      }
+    });
+  
+    if (!checkExists) {
+      return res.status(400).send({ error: "User not found" });
     }
-  });
-
-  if (!checkExists) {
-    return res.status(400).send({ error: "User not found" });
-  }
-
-  const comparePassword = await compare(password, checkExists.password);
-
-  if (!comparePassword) {
-    return res.status(400).send({ error: "Password is not valid" });
-  }
-
-  const token = sign(
-    {}, 
-    "575ae83ad709c84f7f89aaa02ff950d7", 
-    {
-      subject: checkExists.id,
-      expiresIn: "60s"
+  
+    const comparePassword = await compare(password, checkExists.password);
+  
+    if (!comparePassword) {
+      return res.status(400).send({ error: "Password is not valid" });
     }
-  );
-
-  return res.send({
-    user: checkExists,
-    token
-  })
+  
+    const token = sign(
+      {}, 
+      String(process.env.SECRET_KEY), 
+      {
+        subject: checkExists.id,
+        expiresIn: "1d"
+      }
+    );
+  
+    return res.send({
+      user: checkExists,
+      token
+    })
+  } catch (error) {
+    res.json(error)
+  }
 });

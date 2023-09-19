@@ -30,7 +30,17 @@ productRoute.post('/', async (request, response) => {
 })
 
 productRoute.get('/', async (request, response) => {
-  const products = await prisma.product.findMany();
+  const cartIdSchema = z.object({
+    cartId: z.string()
+  });
+
+  const { cartId } = cartIdSchema.parse(request.query);
+
+  const products = await prisma.product.findMany({
+    where: {
+      cartId
+    }
+  });
 
   return response.status(200).send(products);
 });
@@ -58,7 +68,11 @@ productRoute.delete('/:productId', async (request, response) => {
 
   const { productId } = paramsSchema.parse(request.params);
 
-  const productExists = await prisma.product.findFirst({ where: { id: productId } });
+  const productExists = await prisma.product.findFirst({
+    where: {
+      id: productId
+    }
+  });
 
   if (!productExists) {
     return response.status(400).send({ message: "Product already removed" });
@@ -70,7 +84,7 @@ productRoute.delete('/:productId', async (request, response) => {
     }
   });
 
-  return response.status(200).send();
+  return response.status(204).send();
 });
 
 productRoute.patch('/:productId', async (request, response) => {
@@ -80,30 +94,20 @@ productRoute.patch('/:productId', async (request, response) => {
 
   const cartSchema = z.object({
     name: z.string().optional(),
-    price: z.number().min(0).optional(),
-    quantity: z.number().min(0).optional(),
+    price: z.number().optional(),
+    quantity: z.number().optional(),
   });
 
   const { productId } = findProductSchema.parse(request.params);
-  const { name, price, quantity } = cartSchema.parse(request.body);
-
-  if (!name && !price && !quantity) {
-    return response.status(400).send({ error: "None field sended" })
-  }
-
-  const dataUpdated = {
-    name,
-    price,
-    quantity
-  }
+  const product = cartSchema.parse(request.body);
 
   await prisma.product.update({
     where: {
       id: productId
     },
-    data: dataUpdated
+    data: { ...product }
   });
 
-  return response.status(200).send();
+  return response.status(204).send();
 }
 );
