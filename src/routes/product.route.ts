@@ -7,6 +7,22 @@ import { authenticateUser } from "../middlwares/authenticate";
 
 productRoute.use(authenticateUser);
 
+productRoute.get('/:productId', async (req, res) => {
+  const paramsSchema = z.object({
+    productId: z.string(),
+  });
+
+  const { productId } = paramsSchema.parse(req.params);
+
+  const product = await prisma.product.findUniqueOrThrow({
+    where: {
+      id: productId
+    }
+  });
+
+  return res.status(200).send(product);
+});
+
 productRoute.post('/', async (request, response) => {
   const cartSchema = z.object({
     name: z.string(),
@@ -28,38 +44,6 @@ productRoute.post('/', async (request, response) => {
 
   return response.status(201).send();
 })
-
-productRoute.get('/', async (request, response) => {
-  const cartIdSchema = z.object({
-    cartId: z.string()
-  });
-
-  const { cartId } = cartIdSchema.parse(request.query);
-
-  const products = await prisma.product.findMany({
-    where: {
-      cartId
-    }
-  });
-
-  return response.status(200).send(products);
-});
-
-productRoute.get('/:productId', async (req, res) => {
-  const paramsSchema = z.object({
-    productId: z.string(),
-  });
-
-  const { productId } = paramsSchema.parse(req.params);
-
-  const product = await prisma.product.findUniqueOrThrow({
-    where: {
-      id: productId
-    }
-  });
-
-  return res.status(200).send(product);
-});
 
 productRoute.delete('/:productId', async (request, response) => {
   const paramsSchema = z.object({

@@ -7,29 +7,6 @@ import { authenticateUser } from "../middlwares/authenticate";
 
 cartRoute.use(authenticateUser);
 
-cartRoute.post('/', async (request, response) => {
-  const { userId } = request;
-
-  const cartSchema = z.object({
-    title: z.string(),
-    limit: z.number().min(0),
-  });
-
-  const { limit, title } = cartSchema.parse(request.body);
-
-  await prisma.cart.create({
-    data: {
-      title,
-      limit,
-      userId
-    }
-  });
-
-  return response
-    .status(201)
-    .send();
-});
-
 cartRoute.get('/', async (request, response) => {
   const { userId } = request;
 
@@ -45,9 +22,6 @@ cartRoute.get('/', async (request, response) => {
         contains: title
       },
       userId
-    },
-    include: {
-      products: true
     }
   });
 
@@ -76,7 +50,46 @@ cartRoute.get('/:cartId', async (request, response) => {
     .json(cart);
 });
 
-cartRoute.patch('/:cartI', async (request, response) => {
+cartRoute.get('/:cartId/products', async (request, response) => {
+  const cartIdSchema = z.object({
+    cartId: z.string().uuid()
+  });
+  
+  const { cartId } = cartIdSchema.parse(request.params);
+
+  const products = await prisma.product.findMany({
+    where: {
+      cartId
+    }
+  });
+
+  return response.status(200).send(products);
+});
+
+cartRoute.post('/', async (request, response) => {
+  const { userId } = request;
+
+  const cartSchema = z.object({
+    title: z.string(),
+    limit: z.number().min(0),
+  });
+
+  const { limit, title } = cartSchema.parse(request.body);
+
+  await prisma.cart.create({
+    data: {
+      title,
+      limit,
+      userId
+    }
+  });
+
+  return response
+    .status(201)
+    .send();
+});
+
+cartRoute.patch('/:cartId', async (request, response) => {
   const findCartSchema = z.object({
     cartId: z.string(),
   });
@@ -108,12 +121,16 @@ cartRoute.delete('/:cartId', async (req, res) => {
 
   const { cartId } = paramsSchema.parse(req.params);
 
-  await prisma.cart.delete({
-    where: {
-      id: cartId,
-      userId: req.userId
-    }
-  });
-
-  return res.status(204).send();
+  try {
+    await prisma.cart.delete({
+      where: {
+        id: cartId,
+        userId: req.userId
+      }
+    });
+  
+    return res.status(204).send();
+  } catch (error) {
+    return res.status(404).json({ error: "Cart not found" });
+  }
 });
