@@ -3,11 +3,11 @@ import { z } from "zod";
 export const productRoute = Router();
 
 import { prisma } from "../lib/prisma";
-import { AuthenticateUser } from "../middlwares/Authenticate";
+import { authenticateUser } from "../middlwares/authenticate";
 
-productRoute.use(AuthenticateUser);
+productRoute.use(authenticateUser);
 
-productRoute.post('/', async (req, res) => {
+productRoute.post('/', async (request, response) => {
   const cartSchema = z.object({
     name: z.string(),
     price: z.number().min(0),
@@ -15,7 +15,7 @@ productRoute.post('/', async (req, res) => {
     cartId: z.string().uuid(),
   });
 
-  const { name, price, quantity, cartId } = cartSchema.parse(req.body);
+  const { name, price, quantity, cartId } = cartSchema.parse(request.body);
 
   await prisma.product.create({
     data: {
@@ -26,13 +26,13 @@ productRoute.post('/', async (req, res) => {
     }
   });
 
-  return res.status(201).send();
+  return response.status(201).send();
 })
 
-productRoute.get('/', async (req, res) => {
+productRoute.get('/', async (request, response) => {
   const products = await prisma.product.findMany();
 
-  return res.status(200).send(products);
+  return response.status(200).send(products);
 });
 
 productRoute.get('/:productId', async (req, res) => {
@@ -51,17 +51,17 @@ productRoute.get('/:productId', async (req, res) => {
   return res.status(200).send(product);
 });
 
-productRoute.delete('/:productId', async (req, res) => {
+productRoute.delete('/:productId', async (request, response) => {
   const paramsSchema = z.object({
     productId: z.string(),
   });
 
-  const { productId } = paramsSchema.parse(req.params);
+  const { productId } = paramsSchema.parse(request.params);
 
   const productExists = await prisma.product.findFirst({ where: { id: productId } });
 
   if (!productExists) {
-    return res.status(400).send({ message: "Product removed" });
+    return response.status(400).send({ message: "Product already removed" });
   }
 
   await prisma.product.delete({
@@ -70,10 +70,10 @@ productRoute.delete('/:productId', async (req, res) => {
     }
   });
 
-  return res.status(200).send();
+  return response.status(200).send();
 });
 
-productRoute.patch('/:productId', async (req, res) => {
+productRoute.patch('/:productId', async (request, response) => {
   const findProductSchema = z.object({
     productId: z.string(),
   });
@@ -84,11 +84,11 @@ productRoute.patch('/:productId', async (req, res) => {
     quantity: z.number().min(0).optional(),
   });
 
-  const { productId } = findProductSchema.parse(req.params);
-  const { name, price, quantity } = cartSchema.parse(req.body);
+  const { productId } = findProductSchema.parse(request.params);
+  const { name, price, quantity } = cartSchema.parse(request.body);
 
   if (!name && !price && !quantity) {
-    return res.status(400).send({ error: "None field sended" })
+    return response.status(400).send({ error: "None field sended" })
   }
 
   const dataUpdated = {
@@ -104,6 +104,6 @@ productRoute.patch('/:productId', async (req, res) => {
     data: dataUpdated
   });
 
-  return res.status(200).send();
+  return response.status(200).send();
 }
 );

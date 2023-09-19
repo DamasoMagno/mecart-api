@@ -3,19 +3,19 @@ import { z } from "zod";
 export const cartRoute = Router();
 
 import { prisma, Prisma } from "../lib/prisma";
-import { AuthenticateUser } from "../middlwares/Authenticate";
+import { authenticateUser } from "../middlwares/authenticate";
 
-cartRoute.use(AuthenticateUser);
+cartRoute.use(authenticateUser);
 
-cartRoute.post('/', async (req, res) => {
-  const { userId } = req;
+cartRoute.post('/', async (request, response) => {
+  const { userId } = request;
 
   const cartSchema = z.object({
     title: z.string(),
     limit: z.number().min(0),
   });
 
-  const { limit, title } = cartSchema.parse(req.body);
+  const { limit, title } = cartSchema.parse(request.body);
 
   await prisma.cart.create({
     data: {
@@ -25,17 +25,19 @@ cartRoute.post('/', async (req, res) => {
     }
   });
 
-  return res.status(201).send();
+  return response
+    .status(201)
+    .send();
 });
 
-cartRoute.get('/', async (req, res) => {
-  const userId = req.userId;
+cartRoute.get('/', async (request, response) => {
+  const { userId } = request;
 
   const searchCartSchema = z.object({
     title: z.string().optional(),
   });
 
-  const { title } = searchCartSchema.parse(req.query);
+  const { title } = searchCartSchema.parse(request.query);
 
   const carts = await prisma.cart.findMany({
     where: {
@@ -49,17 +51,19 @@ cartRoute.get('/', async (req, res) => {
     }
   });
 
-  return res.status(200).json(carts);
+  return response
+    .status(200)
+    .json(carts);
 }
 );
 
-cartRoute.get('/:cartId', async (req, res) => {
+cartRoute.get('/:cartId', async (request, response) => {
   const findCartSchema = z.object({
     cartId: z.string(),
   });
 
-  const { cartId } = findCartSchema.parse(req.params);
-  const { userId } = req;
+  const { cartId } = findCartSchema.parse(request.params);
+  const { userId } = request;
 
   const cart = await prisma.cart.findUniqueOrThrow({
     where: {
@@ -68,10 +72,12 @@ cartRoute.get('/:cartId', async (req, res) => {
     }
   });
 
-  return res.status(200).json(cart);
+  return response
+    .status(200)
+    .json(cart);
 });
 
-cartRoute.patch('/:cartId', async (req, res) => {
+cartRoute.patch('/:cartId', async (request, response) => {
   const findCartSchema = z.object({
     cartId: z.string(),
   });
@@ -81,11 +87,11 @@ cartRoute.patch('/:cartId', async (req, res) => {
     limit: z.number().min(0).optional()
   });
 
-  const { limit, title } = cartSchema.parse(req.body);
-  const { cartId } = findCartSchema.parse(req.params);
+  const { limit, title } = cartSchema.parse(request.body);
+  const { cartId } = findCartSchema.parse(request.params);
 
   if (!limit && !title) {
-    return res.status(400).send({ error: "None field sended" })
+    return response.status(400).send({ error: "Title or Limit field required" })
   }
 
   await prisma.cart.update({
@@ -98,7 +104,9 @@ cartRoute.patch('/:cartId', async (req, res) => {
     }
   });
 
-  return res.status(200).send();
+  return response
+    .status(200)
+    .send();
 });
 
 cartRoute.delete('/:cartId', async (req, res) => {

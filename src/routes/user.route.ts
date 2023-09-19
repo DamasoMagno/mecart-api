@@ -15,13 +15,13 @@ userRoute.post('/', async (req, res) => {
 
   const { email, name, password } = cartSchema.parse(req.body);
 
-  const checkUserWithSameEmail = await prisma.user.findFirst({
+  const userSameEmail = await prisma.user.findFirst({
     where: {
       email
     }
   });
 
-  if (checkUserWithSameEmail) {
+  if (userSameEmail) {
     return res.status(400).send({ error: "User already exists" });
   }
 
@@ -46,17 +46,17 @@ userRoute.post('/login', async (req, res) => {
 
   const { email, password } = cartSchema.parse(req.body);
 
-  const checkUseEmailExists = await prisma.user.findFirst({
+  const checkExists = await prisma.user.findFirst({
     where: {
       email
     }
   });
 
-  if (!checkUseEmailExists) {
-    return res.status(400).send({ error: "User don't " });
+  if (!checkExists) {
+    return res.status(400).send({ error: "User not found" });
   }
 
-  const comparePassword = await compare(password, checkUseEmailExists.password);
+  const comparePassword = await compare(password, checkExists.password);
 
   if (!comparePassword) {
     return res.status(400).send({ error: "Password is not valid" });
@@ -66,13 +66,13 @@ userRoute.post('/login', async (req, res) => {
     {}, 
     "575ae83ad709c84f7f89aaa02ff950d7", 
     {
-      subject: checkUseEmailExists.id,
+      subject: checkExists.id,
       expiresIn: "60s"
     }
   );
 
   return res.send({
-    user: checkUseEmailExists,
+    user: checkExists,
     token
   })
 });

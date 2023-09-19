@@ -10,8 +10,13 @@
   "name": "mecart-api",
   "version": "1.0.0",
   "main": "index.js",
+  "engines": {
+    "node": ">=14 <15"
+  },
   "scripts": {
-    "dev": "tsx watch src/server.ts"
+    "dev": "tsx watch src/server.ts",
+    "build": "tsup src",
+    "start": "node dist/server.js"
   },
   "keywords": [],
   "author": "",

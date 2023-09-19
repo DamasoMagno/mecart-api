@@ -4,7 +4,7 @@ const PORT = process.env.PORT || 3000;
 
 import { cartRoute } from "./routes/cart.route";
 import { userRoute } from "./routes/user.route";
-import { productRoute } from "./routes/product.route copy";
+import { productRoute } from "./routes/product.route";
 
 app.use(express.json());
 
