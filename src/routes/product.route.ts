@@ -7,20 +7,24 @@ import { authenticateUser } from "../middlwares/authenticate";
 
 productRoute.use(authenticateUser);
 
-productRoute.get('/:productId', async (req, res) => {
+productRoute.get('/:productId', async (request, response) => {
   const paramsSchema = z.object({
     productId: z.string(),
   });
 
-  const { productId } = paramsSchema.parse(req.params);
+  const { productId } = paramsSchema.parse(request.params);
 
-  const product = await prisma.product.findUniqueOrThrow({
+  const product = await prisma.product.findUnique({
     where: {
       id: productId
     }
   });
 
-  return res.status(200).send(product);
+  if (!product) {
+    return response.status(404).json({ error: "Product not found" });
+  }
+
+  return response.status(200).send(product);
 });
 
 productRoute.post('/', async (request, response) => {
@@ -52,23 +56,17 @@ productRoute.delete('/:productId', async (request, response) => {
 
   const { productId } = paramsSchema.parse(request.params);
 
-  const productExists = await prisma.product.findFirst({
-    where: {
-      id: productId
-    }
-  });
+  try {
+    await prisma.product.delete({
+      where: {
+        id: productId
+      }
+    });
 
-  if (!productExists) {
-    return response.status(400).send({ message: "Product already removed" });
+    return response.status(204).send();
+  } catch (error) {
+    return response.status(404).json({ error: "Product not found" });
   }
-
-  await prisma.product.delete({
-    where: {
-      id: productId
-    }
-  });
-
-  return response.status(204).send();
 });
 
 productRoute.patch('/:productId', async (request, response) => {

@@ -45,6 +45,10 @@ cartRoute.get('/:cartId', async (request, response) => {
     }
   });
 
+  if(!cart){
+    return response.status(404).json({ error: "Cart not found" });
+  }
+
   return response
     .status(200)
     .json(cart);
