@@ -3,7 +3,7 @@ import { z } from "zod";
 export const productRoute = Router();
 
 import { prisma } from "../lib/prisma";
-import { authenticateUser } from "../middlwares/authenticate";
+import { authenticateUser } from "../middlwares/Authenticate";
 
 productRoute.use(authenticateUser);
 
