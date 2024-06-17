@@ -84,7 +84,8 @@ cartRoute.post('/', async (request, response) => {
     data: {
       title,
       limit,
-      userId
+      // Cast userId as string since we've ensured it's defined
+      userId: userId as String
     }
   });
 
